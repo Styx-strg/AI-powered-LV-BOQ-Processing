@@ -12,8 +12,6 @@ from copy import deepcopy
 import pdf_report
 from pathlib import Path
 
-import sys
-
 class AIPositions(BaseModel):
     positionsnummer: str | None = Field(
         default=None, 
@@ -1314,73 +1312,3 @@ def complete_workflow(Input_LV, Dateiformat, Scans_dict, Ausgang, on_progress):
     else:
         on_progress(1.0, "Alle Anbieter erfolgreich verarbeitet.")
     return failed
-
-
-if __name__ == "__main__":
-
-    # outputs speichern
-    RESPONSES_FILE = "responses_cache.json"
-
-    def save_responses(responses, path=RESPONSES_FILE):
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(responses, f, ensure_ascii=False, indent=2)
-
-    def load_responses(path=RESPONSES_FILE):
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
-        
-    #Soll_LV als globale Variable für die Agenten funktionen
-    #Soll_LV = excel_LV('Excel blank.xlsx')  
-    Soll_LV, tree = parse_xml('Glasarbeiten.onlv')
-
-    docs, text, cropped_images, position_list = pdf_verarbeitung("TEST22.pdf", Soll_LV)
-
-    sys.exit()
-
-    USE_CACHE = True   # False = Vision-Modell neu laufen lassen
-    try:
-        cache = load_responses()
-
-        if isinstance(cache, list):
-            # Altes Cache-Format
-            responses = cache
-            response_sources = responses
-        else:
-            # Neues Cache-Format
-            responses = cache["responses"]
-            response_sources = cache["response_sources"]
-
-        pydanticobj, response_sources = create_finaljson(responses, response_sources) # Fix als globale Variable pydanticobj
-
-        history = []
-
-        validation_data = validate_offer()
-        # for x, inner_dict in validation_data.items():
-        #     print(x)  # "positions" und "prices"
-        #     for y in inner_dict:
-        #         print(y, ":", inner_dict[y])
-        print(rescan_page("02.42.26.02.L"))
-        
-        #agentoutput = run_agent(SYSTEM_PROMPT)
-        #print(agentoutput)
-        agentoutput = "Heute gibt es viel gutes in der Welt"
-        bieterkommentare = get_comments(pydanticobj)
-
-        validation_data = validate_offer()
-        final_LV = create_LV(pydanticobj, Soll_LV, validation_data)
-        pfad = Path(r"C:\Users\User\Desktop\Programmier Projekte\Nevaris_Workflow\Ergebnisse")
-        create_angebotsLV( final_LV, pfad, "test43", tree)
-        write_excel(final_LV, pfad, "testifesti", "Excel blank.xlsx")
-
-        pdf_report.create_validation_pdf(
-            validation_json=validation_data,
-            ai_report=agentoutput,
-            Extraktionskommentare= pydanticobj.Bericht,
-            output_path="Ergebnisse/Validation.pdf",
-            position_count=len(Soll_LV),
-            Bieterkommentare=bieterkommentare
-        )
-    finally:
-        #delete_images(docs, cropped_images)
-
-        rescan_count.clear()
