@@ -12,6 +12,8 @@ from copy import deepcopy
 import pdf_report
 from pathlib import Path
 
+import sys
+
 class AIPositions(BaseModel):
     positionsnummer: str | None = Field(
         default=None, 
@@ -352,13 +354,13 @@ def seiten_text(page, Soll_LV):
 
     words = page.get_text("words", textpage=textpage)
     for w in words:
-        wort = w[4].strip(".,;:")          # OCR hängt manchmal Satzzeichen an
-        if wort in Soll_LV:                # exakter Treffer im Dictionary
+        wort = w[4].strip(".,;:")
+        if wort in Soll_LV:
             bbox = pymupdf.Rect(w[0], w[1], w[2], w[3])
             position_cords.append(bbox)
             position_list.append(wort)
 
-      #schauen ob alle in einer linie sind wenn nicht außreiser entfernen
+      #schauen ob alle in einer linie sind wenn nicht Außreiser entfernen
     
     paare = list(zip(position_cords, position_list)) #liste kombinieren um sie zu sortieren nach y
     paare.sort(key=lambda p: p[0].y0)
@@ -400,13 +402,11 @@ def position_auf_seite(page, Soll_LV):
     for word in keywords:
         if word in text:
             score += 3
-    #         print(word)
-    # print(f"score nach wörtern = {score}")
+
     for key in Soll_LV:
         if key in text:
             score += 5
-    #         print(key)
-    # print(f"score nach keys = {score} \n")
+
     return (5 <= score), text, position_cords, position_list
 
 def pdf_verarbeitung(pdf_path, Soll_LV):
@@ -445,23 +445,7 @@ def pdf_verarbeitung(pdf_path, Soll_LV):
 
     return docs, text_data, cropped_images, positions_in_image
 
-def speichere_seitenbereiche(
-    page,
-    positions,
-    index,
-    ausgabe_ordner="ausschnitte",
-    dpi=200
-):
-    """
-    Schneidet eine PDF-Seite anhand der gefundenen Wortpositionen
-    in mehrere Bereiche und speichert diese als PNG-Bilder.
-
-    :param page: PyMuPDF Page-Objekt
-    :param positions: Liste von pymupdf.Rect mit Wortpositionen
-    :param ausgabe_ordner: Ausgabeordner für die Bilder
-    :param dpi: Auflösung der gespeicherten Bilder
-    :return: Liste der gespeicherten Bildpfade
-    """
+def speichere_seitenbereiche(page, positions, index, ausgabe_ordner="ausschnitte", dpi=200):
 
     os.makedirs(ausgabe_ordner, exist_ok=True)
 
@@ -470,7 +454,6 @@ def speichere_seitenbereiche(
 
     seite = page.rect
 
-    # Schnittgrenzen festlegen
     grenzen = [seite.y0]
 
     for pos in positions:
@@ -498,7 +481,6 @@ def speichere_seitenbereiche(
             y_unten
         )
 
-        # Bereich als Pixmap rendern
         pix = page.get_pixmap(
             matrix=pymupdf.Matrix(dpi / 72, dpi / 72),
             clip=clip,
@@ -522,7 +504,6 @@ def Mögliche_Positionen_pydantic(Soll_LV, positionen):
         if key in Soll_LV
     }
 
-#def multistep_model_call():
 
 def LLM_call(Soll_LV, cropped_images, positions_list, docs):
     if not docs:
@@ -563,7 +544,6 @@ def LLM_call(Soll_LV, cropped_images, positions_list, docs):
     return responses, response_sources
 
 def finde_ausschnitte(position, duplikat_index=1):
-    """Bildpfade für den Rescan, oder [] wenn es zu der Nummer keinen Eintrag gibt."""
     global position_sources, cropped_images
     treffer = [i for i, pos in enumerate(pydanticobj.positions) if pos.positionsnummer == position]
     if not 1 <= duplikat_index <= len(treffer):
@@ -571,7 +551,7 @@ def finde_ausschnitte(position, duplikat_index=1):
     quellen = position_sources[treffer[duplikat_index - 1]]
     bilder = [q["crop_path"] for q in quellen]
 
-    # Nicht zusammengefügt und letzter Ausschnitt der Seite: Anfang der Folgeseite dazu
+
     letzte = quellen[-1]
     if len(quellen) == 1 and letzte["is_last_crop"] and cropped_images is not None:
         folgeseite = cropped_images.get(letzte["page_index"] + 1)
@@ -597,7 +577,7 @@ def rescan_page(position: str, duplikat_index: int = 1) -> str | dict:
     if images:
         prompt = RESCAN_PROMPT_AUSSCHNITT.format(position=position, stichwort=stichwort)
     else:
-        # Rückfall: ganze Seiten wie bisher
+        # Ganze Seiten schicken als backup
         pattern = re.compile(rf"(?<![\w.]){re.escape(position)}(?![\w.])")
         target_page = next((p for p in range(len(text)) if pattern.search(text[p])), -1)
         if target_page == -1:
@@ -656,6 +636,8 @@ def update_position(position_id: str, field: str, new_value: str | float | bool 
             if field == "Unsicherheit" and not isinstance(new_value, bool):
                 return {"action": "update_position", "success": False, "error": "Unsicherheit muss bool sein."}
 
+            if field in {"einheitspreis", "gesamtpreis"} and new_value is not None and isinstance(new_value, str):
+                new_value = float(new_value)
             if field in {"einheitspreis", "gesamtpreis"} and new_value is not None and (isinstance(new_value, bool) or not isinstance(new_value, (int, float)) or not numpy.isfinite(new_value)):
                 return {"action": "update_position", "success": False, "error": "Preis muss eine endliche Zahl sein."}
 
@@ -998,11 +980,9 @@ def run_agent(system_prompt):
             options={"temperature": 0, "num_ctx": 16384},
         )
 
-        # Antwort des Modells zum Gespräch hinzufügen
         assistant_message = response.message
         tool_calls = assistant_message.tool_calls or []
 
-        # 1. Tool-Aufrufe begrenzen
         MAX_TOOLS_PER_TURN = 1
 
         if len(tool_calls) > MAX_TOOLS_PER_TURN:
@@ -1012,13 +992,12 @@ def run_agent(system_prompt):
             tool_calls = tool_calls[:MAX_TOOLS_PER_TURN]
             assistant_message.tool_calls = tool_calls
 
-        # Assistant-Nachricht erst nach der Begrenzung speichern
         messages.append(assistant_message)
 
         if not tool_calls:
             return assistant_message.content
 
-        # Tool-Aufrufe ausführen
+        # Tool Aufrufe
         for tool_call in tool_calls:
 
             function_name = tool_call.function.name
@@ -1029,7 +1008,7 @@ def run_agent(system_prompt):
 
             function_to_call = available_functions.get(function_name)
 
-            # Alte Validierungsergebnisse entfernen
+            # Alte Validierungsergebnisse entfernen, verwirrt das Model ein bisschen aber bei schlechter hardware nötig
             # if function_name == "validate_offer":
 
             #     messages = [
@@ -1066,7 +1045,6 @@ def run_agent(system_prompt):
                     default=str
                 )
             })
-    #raise RuntimeError("Agent hat maximale Iterationen erreicht.")
     raise RuntimeError(
         "Supervisor-Agent hat das Iterationslimit erreicht. "
         "Prüfung wurde nicht vollständig abgeschlossen."
