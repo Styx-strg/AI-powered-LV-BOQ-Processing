@@ -12,7 +12,7 @@ This tool simplifies that process drastically. However, it should be noted that 
 flowchart LR
 
     Soll["<b>Soll-LV</b><br/>(ONLV or Excel)"]
-    Scan"<b>Scanned Offer</b><br/>(PDF)"]
+    Scan["<b>Scanned Offer</b><br/>(PDF)"]
 
     Parse["<b>Parse Positions</b><br/>(number, text, quantity, unit)"]
     Detect["<b>Detect LV Pages & Locate Positions</b><br/>(Tesseract OCR)<br/>Crop one image per position"]
