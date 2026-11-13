@@ -45,7 +45,7 @@ Use "streamlit run streamlitapp.py" to start the program
 5. Agent review. The validation is sent to another local LLM that acts as an agent. The agent has four tools enabling him to validate, alter, and rescan pages. It is based around the first principle of verifying data and only then changing a price based on new information. All changes are logged with the agent's reasoning and appear in the PDF report.
 6. Output. Depending on the input file, there is either an ONLV created or an Excel file. Both are filled out with all validated prices and, combined with the report, enable the user to validate the workflow outputs quickly.
 
-Ergenisse bild noch einfügen
+![Output Page](Project_insights/OutputView.jpg)
 
 ## Project structure
  
