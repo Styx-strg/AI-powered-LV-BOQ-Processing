@@ -229,8 +229,8 @@ Wenn keine relevanten Auffälligkeiten bestehen, schreibe:
 
 """
 RESCAN_MODEL = "gemma4:e4b"   # ein anderes Modell als in LLM_call eintragen
-LLM_CALL_MODEL = "qwen3-vl:4b-instruct"
-AGENT_MODEL =  "qwen3-vl:4b-instruct"
+LLM_CALL_MODEL = "qwen3-vl:8b-instruct"
+AGENT_MODEL =  "qwen3-vl:8b-instruct"
 
 RESCAN_PROMPT_AUSSCHNITT = """Die Bilder zeigen Ausschnitte eines Leistungsverzeichnisses, in das der Bieter Preise von Hand eingetragen hat. Das erste Bild beginnt mit der Position {position} (Stichwort: {stichwort}). Falls ein zweites Bild dabei ist, zeigt es den Anfang der Folgeseite.
 Nenne zuerst die gedruckte Positionsnummer und das Stichwort exakt wie im Bild. Steht die Position nicht im Bild, antworte 'nicht gefunden' und rate nicht.
