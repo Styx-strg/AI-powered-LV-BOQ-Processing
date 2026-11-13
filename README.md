@@ -50,16 +50,16 @@ Ergenisse bild noch einfügen
 ## Project structure
  
 ```
-app.py          Streamlit UI: upload, progress, downloads, error view
-Workflow.py     complete pipeline: LV parsing, PDF/OCR, extraction, validation,
-                agent tools, agent loop, ONLV/Excel export
-pdf_report.py   PDF report (ReportLab)
-docs/           screenshots and project report
-tessdata/       Tesseract language data (not included)
+app.py                  Streamlit UI: upload, progress, downloads, error view
+Workflow.py             complete pipeline: LV parsing, PDF/OCR, extraction, validation,
+                        agent tools, agent loop, ONLV/Excel export
+pdf_report.py           PDF report (ReportLab)
+Project_Insights/       screenshots and project report
+tessdata/               Tesseract language data (not included. Also needed is the tesseract binary itself)
 ```
 ## Requirements
  
-- Windows, Python 3.11
+- Python 3.11
 - Ollama with at least one vision model pulled
 - Tesseract language data `deu.traineddata` in `./tessdata/` (only needed for scans without a text layer))
 Tested configurations:
