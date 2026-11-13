@@ -127,7 +127,7 @@ def ansicht_eingabe(sperre):
             key="soll_typ",
         )
         soll = st.file_uploader(
-            f"Soll-LV hochladen ({typ}, nicht ausgefüllt)",
+            f"Soll-LV hochladen ({typ})",
             type=SOLL_TYPEN[typ],
             key=f"soll_datei_{typ}",
         )
@@ -148,7 +148,7 @@ def ansicht_eingabe(sperre):
 
     start_moeglich = bool(soll) and bool(pdfs) and not sperre["laeuft"]
     if not (soll and pdfs) and not sperre["laeuft"]:
-        st.caption("Bitte das Soll-LV und mindestens ein Anbieter-Angebot auswählen.")
+        st.caption("Soll-LV und mindestens ein Anbieter-Angebot auswählen.")
 
     if st.button("▶  Verarbeitung starten", type="primary", disabled=not start_moeglich) and soll is not None:
         # Die Upload-Felder im session state speichern
@@ -161,7 +161,7 @@ def ansicht_eingabe(sperre):
         st.session_state.phase = "laeuft"
         st.rerun()
 
-    with st.expander("Wenn etwas hängt"):
+    with st.expander("Mögliche Fehler"):
         st.write("Wenn die Seite sagt, dass eine andere Verarbeitung läuft, obwohl "
                  "niemand arbeitet, kann die Sperre hier aufgehoben werden.")
         if st.button("Sperre aufheben"):
@@ -179,7 +179,7 @@ def ansicht_laeuft(sperre):
     t0 = time.time()
 
     st.subheader("Die Auswertung läuft …")
-    st.caption("Bitte dieses Fenster geöffnet lassen. Das kann einige Minuten dauern.")
+    st.caption("Dieses Fenster geöffnet lassen. Das kann einige Minuten dauern.")
     balken = st.progress(0.0, text="Starte …")
     aktuell = st.empty()
     verlauf = st.empty()
@@ -189,7 +189,7 @@ def ansicht_laeuft(sperre):
         anteil = min(max(anteil, 0.0), 1.0)
         sek = int(time.time() - t0)
         balken.progress(anteil, text=f"{int(anteil * 100)} %  ·  {sek // 60}:{sek % 60:02d} min")
-        aktuell.markdown(f"<div class='aktuell'>⏳ {escape(text)}</div>", unsafe_allow_html=True)
+        aktuell.markdown(f"<div class='aktuell'> {escape(text)}</div>", unsafe_allow_html=True)
         if not protokoll or protokoll[-1] != text:
             protokoll.append(text)
         erledigt = [f"✓ {escape(t)}" for t in protokoll[-7:-1]]  # ohne die aktuelle Zeile
@@ -262,9 +262,8 @@ def ansicht_ergebnis():
 
 
 def ansicht_fehler():
-    st.error("Bei der Verarbeitung ist ein Fehler aufgetreten. "
-             "Bitte den Administrator informieren.")
-    with st.expander("Technische Details (für den Administrator)"):
+    st.error("Bei der Verarbeitung ist ein Fehler aufgetreten. ")
+    with st.expander("Technische Details/Genaue Fehlermeldung"):
         st.code(st.session_state.get("fehler", "keine Details vorhanden"))
 
     def nochmal():
