@@ -7,12 +7,11 @@ import openpyxl
 import numpy
 import re
 from pydantic import BaseModel, Field, ValidationError
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from copy import deepcopy
 import pdf_report
 from pathlib import Path
 
-import sys
 
 class AIPositions(BaseModel):
     positionsnummer: str | None = Field(
@@ -229,7 +228,7 @@ Wenn keine relevanten Auffälligkeiten bestehen, schreibe:
 "Die Prüfung ergab keine offenen Auffälligkeiten."
 
 """
-RESCAN_MODEL = "qwen3-vl:4b-instruct"   # ein anderes Modell als in LLM_call eintragen
+RESCAN_MODEL = "gemma4:e4b"   # ein anderes Modell als in LLM_call eintragen
 LLM_CALL_MODEL = "qwen3-vl:4b-instruct"
 AGENT_MODEL =  "qwen3-vl:4b-instruct"
 
@@ -526,7 +525,7 @@ def LLM_call(Soll_LV, cropped_images, positions_list, docs):
                         "images": [image],
                     }
                 ],
-                options={"temperature": 0, "num_ctx": 8192},
+                options={"temperature": 0, "num_ctx": 16384},
             )
             print(response['message']['content'])
             try:
@@ -1150,12 +1149,14 @@ def create_angebotsLV(final_LV, ausgang, file_name, tree):
             if final_LV[key].gesamtpreis is None:
                 gesamtpreis = "0.00"
             else:
-                gesamtpreis = str(final_LV[key].gesamtpreis)
+                GP = Decimal(final_LV[key].gesamtpreis)
+                gesamtpreis = str(GP.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
 
             if final_LV[key].einheitspreis is None:
                 einheitspreis = "0.00"
             else:
-                einheitspreis = str(final_LV[key].einheitspreis)
+                EP = Decimal(final_LV[key].einheitspreis)
+                einheitspreis = str(EP.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
 
             index = list(element).index(nicht_angeboten)
             element.remove(nicht_angeboten)
