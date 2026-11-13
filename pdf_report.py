@@ -148,24 +148,13 @@ def create_validation_pdf(
     duplicates = positions.get("duplicates", {})
     orphans = positions.get("orphans", [])
     offered_total = prices.get("AI_scanned_total")
-
     gp_errors = prices.get("gp_errors", [])
     incomplete = prices.get("incomplete", [])
     price_valid = prices.get("prices_valid")
     calculated_total = prices.get("calculated_total")
 
-    elements.append(
-        paragraph("Angebotsvalidierung", "ReportTitle")
-    )
-
-    elements.append(
-        paragraph(
-            "Automatisch erstellter Prüfbericht zur "
-            "Auswertung des Anbieterangebots.",
-            "SmallReport"
-        )
-    )
-
+    elements.append(paragraph("Angebotsvalidierung", "ReportTitle"))
+    elements.append(paragraph("Automatisch erstellter Prüfbericht zur " "Auswertung des Anbieterangebots.", "SmallReport"))
     elements.append(Spacer(1, 8))
 
     elements.append(HRFlowable(
@@ -217,16 +206,11 @@ def create_validation_pdf(
         summary_rows,
         [105 * mm, 69 * mm]
     ))
-
-    elements.append(
-        paragraph("2. Positionsvalidierung", "Section")
-    )
+    elements.append(paragraph("2. Positionsvalidierung", "Section"))
 
     def add_position_section(title, positions_list):
-
         if positions_list:
             rows = [[pos] for pos in positions_list]
-
             elements.append(create_table(
                 [title],
                 rows,
@@ -248,16 +232,13 @@ def create_validation_pdf(
             [pos, count]
             for pos, count in duplicates.items()
         ]
-
         elements.append(create_table(
             ["Doppelte Positionen", "Anzahl der Erkennungen"],
             duplicate_rows,
             [100 * mm, 74 * mm]
         ))
     else:
-        elements.append(
-            paragraph("Keine Duplikate gefunden.")
-        )
+        elements.append(paragraph("Keine Duplikate gefunden."))
 
     elements.append(Spacer(1, 10))
 
@@ -269,15 +250,12 @@ def create_validation_pdf(
         )
     )
 
-    elements.append(
-        paragraph("3. Preisvalidierung", "Section")
-    )
+    elements.append(paragraph("3. Preisvalidierung", "Section"))
 
     add_position_section(
         "Positionen mit GP-Abweichungen",
         gp_errors
     )
-
     add_position_section(
         "Unvollständige Positionen / Angaben",
         incomplete
